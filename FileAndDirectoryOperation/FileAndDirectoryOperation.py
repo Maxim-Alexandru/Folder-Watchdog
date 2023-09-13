@@ -1,6 +1,8 @@
 """ Module serving common file and folder operations """
 import os
 import shutil
+import checksum
+from typing import Any
 
 
 class FileAndDirectoryOperation:
@@ -56,5 +58,16 @@ class FileAndDirectoryOperation:
                 return True
         except OSError:
             return False
+
+    @staticmethod
+    def calculate_hash_for_file_object(file_object: str) -> Any:
+        """
+        Calculate the corresponding hash value for the given file or directory
+        :param file_object: String containing the path to the file or directory that needs its hash to be calculated
+        :return: The corresponding hash string for the file object
+        """
+        if os.path.isfile(file_object):
+            return checksum.get_for_file(fp=file_object)
+        return checksum.get_for_directory(dp=file_object)
 
 

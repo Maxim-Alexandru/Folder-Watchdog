@@ -1,7 +1,8 @@
 """ Module serving the synchronization process between two folders """
 import os
-import checksum
-from typing import List, Any
+import time
+from typing import List
+from FileAndDirectoryOperation.FileAndDirectoryOperation import FileAndDirectoryOperation
 from FolderWatchdog.FolderWatchdog import FolderWatchdog
 from OperationsLogger.OperationsLogger import OperationsLogger
 
@@ -22,12 +23,14 @@ class FolderSynchronizer:
         self._synchronization_period = period
         self._is_program_running = True
         self._folder_watchdog = FolderWatchdog()
+        self._file_and_directory_operations = FileAndDirectoryOperation()
 
     def stop_synchronization(self):
         """
         Sets the protected attribute 'is_program_running' to False
         """
         self._is_program_running = False
+        self._folder_watchdog.stop_monitoring()
 
     def parse_source_folder_tree(self):
         """
@@ -56,7 +59,7 @@ class FolderSynchronizer:
         """
         dir_item = {
             current_dir: {
-                "hash": self._calculate_hash_for_file_object(current_dir),
+                "hash": self._file_and_directory_operations.calculate_hash_for_file_object(current_dir),
                 "files": []
             }
         }
@@ -65,21 +68,10 @@ class FolderSynchronizer:
             message = f"Found file: {path_to_file}"
             self._logger.log_message(message=message)
             file_item = {
-                file: self._calculate_hash_for_file_object(path_to_file)
+                file: self._file_and_directory_operations.calculate_hash_for_file_object(path_to_file)
             }
             dir_item[current_dir]["files"].append(file_item)
         self._current_source_folder_structure.append(dir_item)
-
-    @staticmethod
-    def _calculate_hash_for_file_object(file_object: str) -> Any:
-        """
-        Calculate the corresponding hash value for the given file or directory
-        :param file_object: String containing the path to the file or directory that needs its hash to be calculated
-        :return: The corresponding hash string for the file object
-        """
-        if os.path.isfile(file_object):
-            return checksum.get_for_file(fp=file_object)
-        return checksum.get_for_directory(dp=file_object)
 
     def run_synchronization(self):
         """
@@ -87,7 +79,16 @@ class FolderSynchronizer:
         :return:
         """
         try:
-            ...
+            self._folder_watchdog.run_monitoring()
+            time.sleep(self._synchronization_period)
+            correlations = {
+                "folder removed": self._file_and_directory_operations.remove_file_object,
+                "file removed": self._file_and_directory_operations.remove_file_object,
+                "name changed": self._file_and_directory_operations.rename_file_object,
+                "new folder added": self._file_and_directory_operations.copy_file_object,
+                "new file added": self._file_and_directory_operations.copy_file_object,
+                "content changed": self._file_and_directory_operations.copy_file_object
+            }
         finally:
             self.stop_synchronization()
 
