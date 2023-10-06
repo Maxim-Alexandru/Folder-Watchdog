@@ -22,12 +22,16 @@ class FolderSynchronizer:
         self._logger = logger
         self._synchronization_period = period
         self._is_program_running = True
-        self._folder_watchdog = FolderWatchdog()
         self._file_and_directory_operations = FileAndDirectoryOperation()
+        self._folder_watchdog = FolderWatchdog(logger=logger,
+                                               source=source,
+                                               folder_content=self._current_source_folder_structure,
+                                               file_and_directory_operations=self._file_and_directory_operations)
 
     def stop_synchronization(self):
         """
         Sets the protected attribute 'is_program_running' to False
+        and sends a termination signal for the FolderWatchdog instance
         """
         self._is_program_running = False
         self._folder_watchdog.stop_monitoring()
@@ -91,4 +95,3 @@ class FolderSynchronizer:
             }
         finally:
             self.stop_synchronization()
-

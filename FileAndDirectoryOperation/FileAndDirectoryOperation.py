@@ -69,5 +69,3 @@ class FileAndDirectoryOperation:
         if os.path.isfile(file_object):
             return checksum.get_for_file(fp=file_object)
         return checksum.get_for_directory(dp=file_object)
-
-
